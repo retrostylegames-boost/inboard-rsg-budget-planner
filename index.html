@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kingdom Budget Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#FAF6EF; --surface:#FFFFFF; --surface-2:#FFFCF5;
+    --ink:#2B2118; --ink-2:#6B5D4F; --ink-3:#948572;
+    --line:#E7DCC9; --line-strong:#D8C9AE;
+    --accent:#B8862E; --accent-ink:#FFFFFF; --accent-soft:#F1E3C6;
+    --track:#EFE6D4;
+    --good:#0C8F3D; --good-soft:#E1F2E5;
+    --progress:#B8862E; --progress-soft:#F4E9D0;
+    --critical:#B23A2E; --critical-soft:#F7E3DE;
+
+    --cat-boosters:#2a78d6; --cat-dice:#c9591f; --cat-backgrounds:#128f61;
+    --cat-ui:#c98500; --cat-promo:#c15f85; --cat-artdir:#227522; --cat-effects:#4a3aa7;
+
+    --shadow: 0 1px 2px rgba(43,33,24,.06), 0 8px 24px -12px rgba(43,33,24,.18);
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#1B1610; --surface:#231C15; --surface-2:#2A2118;
+      --ink:#F3E9D8; --ink-2:#C9B8A0; --ink-3:#93816B;
+      --line:#392E22; --line-strong:#493B2B;
+      --accent:#DCAA4E; --accent-ink:#241A0B; --accent-soft:#3A2E1A;
+      --track:#33291D;
+      --good:#4FBE73; --good-soft:#1F3222;
+      --progress:#DCAA4E; --progress-soft:#3A2E1A;
+      --critical:#E3796A; --critical-soft:#3C241F;
+
+      --cat-boosters:#5b9ce6; --cat-dice:#e2803f; --cat-backgrounds:#2fb083;
+      --cat-ui:#dba233; --cat-promo:#dd8aa9; --cat-artdir:#5aa25a; --cat-effects:#9085e9;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#1B1610; --surface:#231C15; --surface-2:#2A2118;
+    --ink:#F3E9D8; --ink-2:#C9B8A0; --ink-3:#93816B;
+    --line:#392E22; --line-strong:#493B2B;
+    --accent:#DCAA4E; --accent-ink:#241A0B; --accent-soft:#3A2E1A;
+    --track:#33291D;
+    --good:#4FBE73; --good-soft:#1F3222;
+    --progress:#DCAA4E; --progress-soft:#3A2E1A;
+    --critical:#E3796A; --critical-soft:#3C241F;
+
+    --cat-boosters:#5b9ce6; --cat-dice:#e2803f; --cat-backgrounds:#2fb083;
+    --cat-ui:#dba233; --cat-promo:#dd8aa9; --cat-artdir:#5aa25a; --cat-effects:#9085e9;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{ background:var(--bg); }
+  body{
+    margin:0;
+    color:var(--ink);
+    font-family:var(--font-body);
+    padding-inline:20px; padding-block:32px 56px;
+  }
+  #app{ max-width:1080px; margin-inline:auto; }
+  h1,h2,h3{font-family:var(--font-display); font-weight:600; margin:0; text-wrap:balance;}
+  p{margin:0;}
+  ::selection{background:var(--accent-soft);}
+  a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
+  [hidden]{ display:none!important; }
+
+  /* ---- password gate ---- */
+  #gate{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding-block:32px;
+  }
+  .gate-card{
+    width:100%; max-width:360px; background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; box-shadow:var(--shadow); padding:28px; text-align:center;
+  }
+  .gate-card .mark{ font-family:var(--font-display); font-weight:600; font-size:20px; margin-bottom:4px; }
+  .gate-card .sub{ color:var(--ink-2); font-size:13.5px; margin-top:6px; margin-bottom:20px; line-height:1.5; }
+  #gatePw{
+    width:100%; font-family:var(--font-body); font-size:16px; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line-strong); border-radius:10px;
+    padding:11px 13px; text-align:center; letter-spacing:.05em;
+  }
+  #gatePw:focus{ border-color:var(--accent); outline:none; }
+  #gateBtn{
+    margin-top:12px; width:100%; font-family:var(--font-body); font-weight:600; font-size:14px;
+    background:var(--accent); color:var(--accent-ink); border:none; border-radius:10px;
+    padding:11px 13px; cursor:pointer;
+  }
+  #gateBtn:hover{ opacity:.92; }
+  .gate-err{ color:var(--critical); font-size:13px; margin-top:12px; }
+
+  .eyebrow{
+    font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  header.page{ margin-bottom:28px; }
+  header.page h1{ font-size:clamp(26px,4vw,34px); margin-top:6px; line-height:1.15; }
+  header.page .sub{ margin-top:10px; color:var(--ink-2); font-size:15px; max-width:56ch; line-height:1.55; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow); padding:22px;
+  }
+
+  .budget-card{
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .budget-card .label{
+    font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3);
+    margin-bottom:6px;
+  }
+  .budget-input-wrap{ display:flex; align-items:baseline; gap:4px; }
+  .budget-input-wrap .sym{ font-family:var(--font-display); font-size:26px; color:var(--ink-2); }
+  #budgetInput{
+    font-family:var(--font-display); font-weight:600; font-size:30px; color:var(--ink);
+    background:transparent; border:none; border-bottom:2px solid var(--line-strong);
+    width:9ch; padding:2px 2px 4px; font-variant-numeric:tabular-nums;
+  }
+  #budgetInput:focus{ border-bottom-color:var(--accent); outline:none; }
+  .budget-note{ color:var(--ink-3); font-size:13px; margin-top:6px; }
+  .budget-card .divider{ width:1px; align-self:stretch; background:var(--line); min-height:44px; }
+  .budget-meta{ font-size:13.5px; color:var(--ink-2); line-height:1.5; flex:1 1 220px; }
+  .budget-meta b{ color:var(--ink); }
+
+  section.block{ margin-bottom:34px; }
+  .block-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+  .block-head h2{ font-size:21px; }
+  .block-head .hint{ color:var(--ink-3); font-size:13.5px; max-width:44ch; }
+
+  .chart-row{
+    display:grid; grid-template-columns: 240px 1fr; gap:28px; align-items:center;
+  }
+  @media (max-width:640px){ .chart-row{ grid-template-columns:1fr; justify-items:center; } }
+
+  .donut-wrap{ position:relative; width:220px; height:220px; }
+  .donut-wrap svg{ width:100%; height:100%; display:block; }
+  .donut-center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; pointer-events:none; padding:0 14px;
+  }
+  .donut-center .amt{ font-family:var(--font-display); font-weight:700; font-size:26px; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .donut-center .pct{ font-size:13px; color:var(--ink-2); margin-top:4px; }
+  .donut-center .pct.critical{ color:var(--critical); font-weight:600; }
+  path.seg{ transition: opacity .15s ease; }
+  path.seg:hover{ opacity:.82; }
+
+  .legend{ display:flex; flex-direction:column; gap:10px; }
+  .legend-row{
+    display:flex; align-items:center; gap:10px; font-size:14px;
+    padding:9px 10px; border-radius:10px; background:var(--surface-2);
+  }
+  .swatch{ width:11px; height:11px; border-radius:3px; flex:none; }
+  .legend-row .name{ flex:1; min-width:0; }
+  .legend-row .name .sub{ display:block; color:var(--ink-3); font-size:12px; margin-top:1px; }
+  .legend-row .amt{ font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .pill{
+    font-size:11px; font-weight:600; padding:3px 8px; border-radius:99px; white-space:nowrap;
+  }
+  .pill.done{ background:var(--good-soft); color:var(--good); }
+  .pill.progress{ background:var(--progress-soft); color:var(--progress); }
+
+  .catalog{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;
+  }
+  @media (max-width:560px){ .catalog{ grid-template-columns:1fr; } }
+  .cat-card{
+    display:flex; align-items:center; gap:12px;
+    border:1px solid var(--line); border-radius:12px; padding:12px 12px; background:var(--surface-2);
+  }
+  .cat-card .swatch{ width:9px; height:9px; margin-top:2px; align-self:flex-start; }
+  .cat-card .info{ flex:1; min-width:0; }
+  .cat-card .info .n{ font-size:13.5px; font-weight:600; line-height:1.3; }
+  .cat-card .info .p{ font-size:12.5px; color:var(--ink-3); margin-top:2px; font-variant-numeric:tabular-nums; }
+  .add-btn{
+    flex:none; width:34px; height:34px; border-radius:10px; border:1px solid var(--line-strong);
+    background:var(--surface); color:var(--ink); font-size:18px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-body);
+  }
+  .add-btn:hover{ background:var(--accent-soft); border-color:var(--accent); }
+
+  .plan-panel{
+    margin-top:20px; border-top:1px dashed var(--line-strong); padding-top:18px;
+  }
+  .plan-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+  .plan-head h3{ font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-2); }
+  .reset-btn{
+    font-size:12.5px; color:var(--ink-3); background:none; border:none; cursor:pointer; font-family:var(--font-body);
+    text-decoration:underline; text-underline-offset:2px; padding:2px;
+  }
+  .reset-btn:hover{ color:var(--ink); }
+  .plan-list{ display:flex; flex-direction:column; gap:8px; }
+  .plan-empty{ color:var(--ink-3); font-size:13.5px; padding:10px 2px; }
+  .plan-row{
+    display:flex; align-items:center; gap:10px; font-size:13.5px; padding:8px 10px;
+    background:var(--surface-2); border-radius:10px;
+  }
+  .plan-row .qty{ font-variant-numeric:tabular-nums; color:var(--ink-3); flex:none; width:2.4ch; }
+  .plan-row .name{ flex:1; min-width:0; }
+  .plan-row .amt{ font-weight:600; font-variant-numeric:tabular-nums; }
+  .rm-btn{
+    flex:none; width:24px; height:24px; border-radius:7px; border:1px solid var(--line-strong);
+    background:var(--surface); color:var(--ink-2); cursor:pointer; font-size:13px; line-height:1;
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-body);
+  }
+  .rm-btn:hover{ background:var(--critical-soft); color:var(--critical); border-color:var(--critical); }
+
+  .status-banner{
+    margin-top:16px; padding:10px 14px; border-radius:10px; font-size:13.5px; display:flex; gap:8px; align-items:flex-start;
+    background:var(--critical-soft); color:var(--critical); font-weight:500; line-height:1.5;
+  }
+
+  footer.page{ margin-top:40px; padding-top:18px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="mark">Backgammon Kingdom</div>
+    <p class="sub">Budget planner — enter the password to view.</p>
+    <input id="gatePw" type="password" placeholder="Password" autocomplete="off" inputmode="numeric">
+    <button id="gateBtn" type="button">Enter</button>
+    <p class="gate-err" id="gateErr" hidden>That's not it — try again.</p>
+  </div>
+</div>
+
+<div id="app" hidden>
+
+<header class="page">
+  <div class="eyebrow">RSG × Inboard Games — Backgammon Kingdom</div>
+  <h1>Monthly Art &amp; Animation Budget</h1>
+  <p class="sub">A running view of what's already committed this month, and a sandbox for testing what new work would fit before we scope it for real.</p>
+</header>
+
+<div class="card budget-card">
+  <div>
+    <div class="label">Monthly budget</div>
+    <div class="budget-input-wrap">
+      <span class="sym">$</span>
+      <input id="budgetInput" type="number" inputmode="numeric" min="0" step="250" value="15000" aria-label="Monthly budget in dollars">
+    </div>
+    <div class="budget-note">Example figure — edit to match your real number</div>
+  </div>
+  <div class="divider"></div>
+  <p class="budget-meta">Every price below is a <b>fixed man-day rate</b> already used on this project, so the two charts turn your budget straight into <b>what it actually buys</b>.</p>
+</div>
+
+<section class="block">
+  <div class="block-head">
+    <h2>This month, so far</h2>
+    <p class="hint">Everything already approved and in motion for September.</p>
+  </div>
+  <div class="card">
+    <div class="chart-row">
+      <div class="donut-wrap"><svg id="chartCurrent" viewBox="0 0 220 220"></svg>
+        <div class="donut-center" id="centerCurrent"></div>
+      </div>
+      <div class="legend" id="legendCurrent"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="block-head">
+    <h2>Plan what's next</h2>
+    <p class="hint">Tap anything you're considering — see how it lands against this month's budget before it's formally scoped.</p>
+  </div>
+  <div class="card">
+    <div class="chart-row">
+      <div class="donut-wrap"><svg id="chartPlan" viewBox="0 0 220 220"></svg>
+        <div class="donut-center" id="centerPlan"></div>
+      </div>
+      <div class="legend" id="legendPlan"></div>
+    </div>
+
+    <div class="status-banner" id="overBudgetBanner" hidden></div>
+
+    <div class="plan-panel">
+      <div class="plan-head">
+        <h3>Catalog</h3>
+      </div>
+      <div class="catalog" id="catalog"></div>
+
+      <div class="plan-panel" style="border-top:none; padding-top:16px;">
+        <div class="plan-head">
+          <h3>Your plan</h3>
+          <button class="reset-btn" id="resetPlan" type="button">Reset to example</button>
+        </div>
+        <div class="plan-list" id="planList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="page">
+  Maintained by the RSG account team — updated as new work is approved. Last updated September 24, 2026.<br>
+  Ranged estimates are planning figures only; every new task still gets a confirmed quote before work starts.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- password gate ----
+  var PASSWORD = "1234";
+  var STORE_KEY = "kbp_unlocked";
+  function unlock(){
+    document.getElementById("gate").hidden = true;
+    document.getElementById("app").hidden = false;
+  }
+  function tryUnlock(){
+    var v = document.getElementById("gatePw").value;
+    if (v === PASSWORD) {
+      try { localStorage.setItem(STORE_KEY, "1"); } catch(e){}
+      unlock();
+      boot();
+    } else {
+      document.getElementById("gateErr").hidden = false;
+      document.getElementById("gatePw").focus();
+      document.getElementById("gatePw").select();
+    }
+  }
+  document.getElementById("gateBtn").addEventListener("click", tryUnlock);
+  document.getElementById("gatePw").addEventListener("keydown", function(e){
+    document.getElementById("gateErr").hidden = true;
+    if (e.key === "Enter") tryUnlock();
+  });
+  var alreadyUnlocked = false;
+  try { alreadyUnlocked = localStorage.getItem(STORE_KEY) === "1"; } catch(e){}
+  if (alreadyUnlocked) unlock();
+
+  // ---- dashboard ----
+  var CATEGORIES = {
+    boosters:    { label: "Boosters",           varName: "--cat-boosters"    },
+    dice:        { label: "Dice & Board",       varName: "--cat-dice"        },
+    backgrounds: { label: "Backgrounds",        varName: "--cat-backgrounds" },
+    ui:          { label: "UI & Screens",       varName: "--cat-ui"          },
+    promo:       { label: "Promotions",         varName: "--cat-promo"       },
+    artdir:      { label: "Art Direction",      varName: "--cat-artdir"      },
+    effects:     { label: "Gameplay Effects",   varName: "--cat-effects"     }
+  };
+
+  // Edit this list whenever new work is approved for the month.
+  var CURRENT_SCOPE = [
+    { name: "Cannon Booster",              price: 1125, category: "boosters",    status: "progress", statusLabel: "In production" },
+    { name: "New Dice — full redesign",    price: 1250, category: "dice",        status: "progress", statusLabel: "In production" },
+    { name: "Board Render + Export",       price: 750,  category: "dice",        status: "done",     statusLabel: "Done" },
+    { name: "Background — Concept",        price: 750,  category: "backgrounds", status: "done",     statusLabel: "Done" },
+    { name: "Art Direction & Research",    price: 1000, category: "artdir",      status: "progress", statusLabel: "In progress" }
+  ];
+
+  // Fixed-price catalog for the planner. Ranged items use the midpoint for the math.
+  var CATALOG = [
+    { id:"boostericon", name:"Booster (icon + animation)",     category:"boosters",    price:1125 },
+    { id:"dice",        name:"Full dice redesign",             category:"dice",        price:1250 },
+    { id:"boardrender", name:"Board / screen render + export", category:"dice",        price:750  },
+    { id:"bgconcept",   name:"Background — concept only",      category:"backgrounds", price:750  },
+    { id:"bgfull",      name:"Background — concept + render",  category:"backgrounds", priceLow:1350, priceHigh:1650 },
+    { id:"uiconcept",   name:"Main screen UI — per screen",    category:"ui",          priceLow:375,  priceHigh:500  },
+    { id:"promo",       name:"Monetization pop-up",            category:"promo",       priceLow:750,  priceHigh:1000 },
+    { id:"artdir",      name:"Art Direction Guide + research", category:"artdir",      price:1000 },
+    { id:"effect",      name:"Gameplay animation / effect",    category:"effects",     priceLow:250,  priceHigh:500  }
+  ];
+
+  var EXAMPLE_PLAN = [ { id:"bgfull", qty:1 }, { id:"effect", qty:2 } ];
+
+  function catalogValue(item){ return item.price != null ? item.price : (item.priceLow + item.priceHigh) / 2; }
+  function catalogPriceLabel(item){
+    if (item.price != null) return "$" + item.price.toLocaleString();
+    return "$" + item.priceLow.toLocaleString() + "–" + item.priceHigh.toLocaleString();
+  }
+  function fmt(n){ return "$" + Math.round(n).toLocaleString(); }
+  function byId(id){ return CATALOG.filter(function(c){ return c.id === id; })[0]; }
+
+  function polar(cx, cy, r, angle){
+    var a = (angle - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+  function segPath(cx, cy, rOuter, rInner, a0, a1){
+    var large = (a1 - a0) > 180 ? 1 : 0;
+    var p0 = polar(cx, cy, rOuter, a1), p1 = polar(cx, cy, rOuter, a0);
+    var p2 = polar(cx, cy, rInner, a0), p3 = polar(cx, cy, rInner, a1);
+    return "M " + p0.x + " " + p0.y +
+      " A " + rOuter + " " + rOuter + " 0 " + large + " 0 " + p1.x + " " + p1.y +
+      " L " + p2.x + " " + p2.y +
+      " A " + rInner + " " + rInner + " 0 " + large + " 1 " + p3.x + " " + p3.y + " Z";
+  }
+  function svgNS(tag){ return document.createElementNS("http://www.w3.org/2000/svg", tag); }
+
+  function renderDonut(svgEl, slices, total, trackVar, ringVar){
+    while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+    var cx = 110, cy = 110, rOuter = 98, rInner = 66, gap = slices.length > 1 ? 2.2 : 0;
+    var sum = slices.reduce(function(s, x){ return s + x.value; }, 0);
+    var denom = Math.max(total, sum, 1);
+    var angle = 0;
+    var style = getComputedStyle(document.documentElement);
+
+    slices.forEach(function(sl){
+      if (sl.value <= 0) return;
+      var span = (sl.value / denom) * 360;
+      var a0 = angle + gap / 2, a1 = angle + span - gap / 2;
+      if (a1 <= a0) a1 = a0 + 0.001;
+      var path = svgNS("path");
+      path.setAttribute("d", segPath(cx, cy, rOuter, rInner, a0, a1));
+      path.setAttribute("fill", sl.colorVar);
+      path.setAttribute("class", "seg");
+      var t = svgNS("title"); t.textContent = sl.label + " — " + fmt(sl.value);
+      path.appendChild(t);
+      svgEl.appendChild(path);
+      angle += span;
+    });
+
+    var used = sum;
+    if (used < denom - 0.5) {
+      var remain = denom - used;
+      var span = (remain / denom) * 360;
+      var a0 = angle + gap / 2, a1 = angle + span - gap / 2;
+      if (a1 <= a0) a1 = a0 + 0.001;
+      var path = svgNS("path");
+      path.setAttribute("d", segPath(cx, cy, rOuter, rInner, a0, a1));
+      path.setAttribute("fill", style.getPropertyValue(trackVar).trim());
+      path.setAttribute("class", "seg");
+      var t = svgNS("title"); t.textContent = "Remaining — " + fmt(remain);
+      path.appendChild(t);
+      svgEl.appendChild(path);
+    }
+
+    if (ringVar) {
+      var ring = svgNS("circle");
+      ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("r", rOuter + 5);
+      ring.setAttribute("fill", "none");
+      ring.setAttribute("stroke", style.getPropertyValue(ringVar).trim());
+      ring.setAttribute("stroke-width", "2");
+      ring.setAttribute("stroke-dasharray", "1 4");
+      ring.setAttribute("stroke-linecap", "round");
+      svgEl.insertBefore(ring, svgEl.firstChild);
+    }
+  }
+
+  function legendRow(item){
+    var wrap = document.createElement("div");
+    wrap.className = "legend-row";
+    var sw = document.createElement("span");
+    sw.className = "swatch";
+    sw.style.background = "var(" + CATEGORIES[item.category].varName + ")";
+    wrap.appendChild(sw);
+    var name = document.createElement("div");
+    name.className = "name";
+    name.innerHTML = item.name + '<span class="sub">' + CATEGORIES[item.category].label + "</span>";
+    wrap.appendChild(name);
+    if (item.statusLabel) {
+      var pill = document.createElement("span");
+      pill.className = "pill " + item.status;
+      pill.textContent = item.statusLabel;
+      wrap.appendChild(pill);
+    }
+    var amt = document.createElement("span");
+    amt.className = "amt";
+    amt.textContent = fmt(item.price);
+    wrap.appendChild(amt);
+    return wrap;
+  }
+
+  function getBudget(){
+    var v = parseFloat(document.getElementById("budgetInput").value);
+    return isNaN(v) || v < 0 ? 0 : v;
+  }
+
+  function currentTotal(){
+    return CURRENT_SCOPE.reduce(function(s, x){ return s + x.price; }, 0);
+  }
+
+  function renderCurrent(){
+    var budget = getBudget();
+    var total = currentTotal();
+    var slices = CURRENT_SCOPE.map(function(item){
+      return { value: item.price, colorVar: "var(" + CATEGORIES[item.category].varName + ")", label: item.name };
+    });
+    renderDonut(document.getElementById("chartCurrent"), slices, budget, "--track", null);
+
+    var pct = budget > 0 ? Math.round((total / budget) * 100) : 0;
+    var center = document.getElementById("centerCurrent");
+    center.innerHTML = '<div class="amt">' + fmt(total) + '</div>' +
+      '<div class="pct">' + pct + '% of budget</div>';
+
+    var legend = document.getElementById("legendCurrent");
+    legend.innerHTML = "";
+    CURRENT_SCOPE.forEach(function(item){ legend.appendChild(legendRow(item)); });
+  }
+
+  var plan = [];
+
+  function planLines(){
+    return plan.map(function(p){
+      var c = byId(p.id);
+      return { id:p.id, name:c.name, category:c.category, qty:p.qty, unit: catalogValue(c), total: catalogValue(c) * p.qty };
+    });
+  }
+
+  function renderPlan(){
+    var budget = getBudget();
+    var base = currentTotal();
+    var lines = planLines();
+    var planTotal = lines.reduce(function(s, l){ return s + l.total; }, 0);
+    var grandTotal = base + planTotal;
+    var over = grandTotal > budget;
+
+    var slices = [];
+    var baseByCat = {};
+    CURRENT_SCOPE.forEach(function(item){ baseByCat[item.category] = (baseByCat[item.category] || 0) + item.price; });
+    Object.keys(baseByCat).forEach(function(cat){
+      slices.push({ value: baseByCat[cat], colorVar: "var(" + CATEGORIES[cat].varName + ")", label: CATEGORIES[cat].label + " (committed)" });
+    });
+    lines.forEach(function(l){
+      slices.push({ value: l.total, colorVar: "var(" + CATEGORIES[l.category].varName + ")", label: l.name });
+    });
+
+    renderDonut(document.getElementById("chartPlan"), slices, budget, "--track", over ? "--critical" : null);
+
+    var center = document.getElementById("centerPlan");
+    var pct = budget > 0 ? Math.round((grandTotal / budget) * 100) : 0;
+    center.innerHTML = '<div class="amt">' + fmt(grandTotal) + '</div>' +
+      '<div class="pct' + (over ? ' critical' : '') + '">' + pct + '% of budget</div>';
+
+    var banner = document.getElementById("overBudgetBanner");
+    if (over) {
+      banner.hidden = false;
+      banner.textContent = "This plan runs " + fmt(grandTotal - budget) + " over the example budget — good sign for prioritizing what matters most first.";
+    } else {
+      banner.hidden = true;
+    }
+
+    var legend = document.getElementById("legendPlan");
+    legend.innerHTML = "";
+    var committed = document.createElement("div");
+    committed.className = "legend-row";
+    committed.innerHTML = '<span class="swatch" style="background:var(--ink-3)"></span>' +
+      '<div class="name">Already committed this month<span class="sub">' + CURRENT_SCOPE.length + ' items</span></div>' +
+      '<span class="amt">' + fmt(base) + "</span>";
+    legend.appendChild(committed);
+
+    if (lines.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "plan-empty";
+      empty.textContent = "Add something from the catalog below to see it here.";
+      legend.appendChild(empty);
+    } else {
+      lines.forEach(function(l){
+        var row = document.createElement("div");
+        row.className = "legend-row";
+        row.innerHTML = '<span class="swatch" style="background:var(' + CATEGORIES[l.category].varName + ')"></span>' +
+          '<div class="name">' + l.name + (l.qty > 1 ? " ×" + l.qty : "") + '<span class="sub">' + CATEGORIES[l.category].label + '</span></div>' +
+          '<span class="amt">' + fmt(l.total) + "</span>";
+        legend.appendChild(row);
+      });
+    }
+
+    var planListEl = document.getElementById("planList");
+    planListEl.innerHTML = "";
+    if (lines.length === 0) {
+      var pe = document.createElement("div");
+      pe.className = "plan-empty";
+      pe.textContent = "Your plan is empty — tap “+” on anything above to test it.";
+      planListEl.appendChild(pe);
+    } else {
+      lines.forEach(function(l){
+        var row = document.createElement("div");
+        row.className = "plan-row";
+        row.innerHTML = '<span class="qty">×' + l.qty + '</span>' +
+          '<span class="name">' + l.name + '</span>' +
+          '<span class="amt">' + fmt(l.total) + '</span>';
+        var rm = document.createElement("button");
+        rm.className = "rm-btn"; rm.type = "button"; rm.setAttribute("aria-label", "Remove one " + l.name);
+        rm.textContent = "−";
+        rm.addEventListener("click", function(){ changeQty(l.id, -1); });
+        row.appendChild(rm);
+        planListEl.appendChild(row);
+      });
+    }
+  }
+
+  function changeQty(id, delta){
+    var existing = plan.filter(function(p){ return p.id === id; })[0];
+    if (existing) {
+      existing.qty += delta;
+      if (existing.qty <= 0) plan = plan.filter(function(p){ return p.id !== id; });
+    } else if (delta > 0) {
+      plan.push({ id: id, qty: 1 });
+    }
+    renderAll();
+  }
+
+  function renderCatalog(){
+    var el = document.getElementById("catalog");
+    el.innerHTML = "";
+    CATALOG.forEach(function(item){
+      var card = document.createElement("div");
+      card.className = "cat-card";
+      card.innerHTML = '<span class="swatch" style="background:var(' + CATEGORIES[item.category].varName + ')"></span>' +
+        '<div class="info"><div class="n">' + item.name + '</div><div class="p">' + catalogPriceLabel(item) + '</div></div>';
+      var btn = document.createElement("button");
+      btn.className = "add-btn"; btn.type = "button"; btn.setAttribute("aria-label", "Add " + item.name);
+      btn.textContent = "+";
+      btn.addEventListener("click", function(){ changeQty(item.id, 1); });
+      card.appendChild(btn);
+      el.appendChild(card);
+    });
+  }
+
+  function renderAll(){ renderCurrent(); renderPlan(); }
+
+  var booted = false;
+  function boot(){
+    if (booted) return;
+    booted = true;
+    plan = EXAMPLE_PLAN.map(function(p){ return { id: p.id, qty: p.qty }; });
+    document.getElementById("budgetInput").addEventListener("input", renderAll);
+    document.getElementById("resetPlan").addEventListener("click", function(){
+      plan = EXAMPLE_PLAN.map(function(p){ return { id: p.id, qty: p.qty }; });
+      renderAll();
+    });
+    renderCatalog();
+    renderAll();
+  }
+
+  if (alreadyUnlocked) boot();
+})();
+</script>
+</body>
+</html>
